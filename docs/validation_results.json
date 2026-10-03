@@ -1,0 +1,19 @@
+{
+  "cases": 944,
+  "dataset_cases": 904,
+  "synthetic_cases": 40,
+  "model_retrained": false,
+  "max_probability_error": 0.0,
+  "max_cl_error": 0.0,
+  "max_al_error": 0.0,
+  "max_shap_error": 0.0,
+  "class_differences": 0,
+  "reliability_differences": 0,
+  "neighbor_differences": 0,
+  "n_dense": 813,
+  "density_radius": 1.7888611102573966,
+  "load_seconds": 0.03943149999395246,
+  "median_evaluation_and_shap_seconds": 0.004357949997938704,
+  "max_evaluation_and_shap_seconds": 0.07923820000723936,
+  "original_artifact_unmodified": true
+}

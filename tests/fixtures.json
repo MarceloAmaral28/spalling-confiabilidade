@@ -1,0 +1,426 @@
+{
+  "source": "Original FUNCOES/funcoes.py + notebook 31 operational object + shap.TreeExplainer",
+  "source_artifact_sha256": "74972f030bcefafb61dca97d8fbc7b4e0fef10a0013ed5d6fc6850ea48a831d6",
+  "cases": [
+    {
+      "name": "base_0",
+      "inputs": {
+        "Water/binder ratio": 0.201,
+        "Heating rate, °C/min": 5.0,
+        "Moisture content": 0.05,
+        "Characteristic length, mm": 51.0,
+        "Maximum exposure temperature, °C": 100.0,
+        "Silica fume/binder ratio": 0.1,
+        "Maximum aggregate size, mm": 13.0,
+        "Quantity of PP fiber, kg/m³": 0.0
+      },
+      "expected": {
+        "probability": 0.14726004004478455,
+        "predicted_class": 0,
+        "cl": 0.9999999999973924,
+        "al": 0.9999999999980521,
+        "reliable": true,
+        "neighbors": [
+          0,
+          1,
+          2,
+          4,
+          5,
+          6,
+          20,
+          16,
+          3,
+          8
+        ],
+        "shap": [
+          0.8803049921989441,
+          0.3297165334224701,
+          2.214667320251465,
+          0.2644854485988617,
+          -6.006231784820557,
+          0.5675662755966187,
+          -0.7815070152282715,
+          0.8236412405967712
+        ]
+      }
+    },
+    {
+      "name": "base_2",
+      "inputs": {
+        "Water/binder ratio": 0.201,
+        "Heating rate, °C/min": 5.0,
+        "Moisture content": 0.05,
+        "Characteristic length, mm": 51.0,
+        "Maximum exposure temperature, °C": 300.0,
+        "Silica fume/binder ratio": 0.1,
+        "Maximum aggregate size, mm": 13.0,
+        "Quantity of PP fiber, kg/m³": 0.0
+      },
+      "expected": {
+        "probability": 0.915816068649292,
+        "predicted_class": 1,
+        "cl": 0.999999999993127,
+        "al": 7.521255915002216e-12,
+        "reliable": false,
+        "neighbors": [
+          2,
+          1,
+          3,
+          0,
+          6,
+          5,
+          7,
+          4,
+          21,
+          17
+        ],
+        "shap": [
+          0.8783130049705505,
+          0.33274808526039124,
+          3.223649024963379,
+          0.2595957815647125,
+          -3.470031261444092,
+          1.0276798009872437,
+          -0.7288781404495239,
+          0.9126337766647339
+        ]
+      }
+    },
+    {
+      "name": "base_3",
+      "inputs": {
+        "Water/binder ratio": 0.201,
+        "Heating rate, °C/min": 5.0,
+        "Moisture content": 0.05,
+        "Characteristic length, mm": 51.0,
+        "Maximum exposure temperature, °C": 450.0,
+        "Silica fume/binder ratio": 0.1,
+        "Maximum aggregate size, mm": 13.0,
+        "Quantity of PP fiber, kg/m³": 0.0
+      },
+      "expected": {
+        "probability": 0.9672978520393372,
+        "predicted_class": 1,
+        "cl": 0.9999999999955412,
+        "al": 0.9999999999940283,
+        "reliable": true,
+        "neighbors": [
+          3,
+          2,
+          7,
+          1,
+          6,
+          623,
+          595,
+          588,
+          594,
+          587
+        ],
+        "shap": [
+          1.124739170074463,
+          0.39851850271224976,
+          2.2975783348083496,
+          0.2887057662010193,
+          -1.4606479406356812,
+          0.6415585279464722,
+          -1.0285764932632446,
+          1.1740870475769043
+        ]
+      }
+    },
+    {
+      "name": "base_100",
+      "inputs": {
+        "Water/binder ratio": 0.6,
+        "Heating rate, °C/min": 5.0,
+        "Moisture content": 0.035,
+        "Characteristic length, mm": 75.0,
+        "Maximum exposure temperature, °C": 300.0,
+        "Silica fume/binder ratio": 0.0,
+        "Maximum aggregate size, mm": 16.0,
+        "Quantity of PP fiber, kg/m³": 0.0
+      },
+      "expected": {
+        "probability": 5.572670852416195e-05,
+        "predicted_class": 0,
+        "cl": 1.0,
+        "al": 1.0,
+        "reliable": true,
+        "neighbors": [
+          100,
+          106,
+          76,
+          103,
+          101,
+          109,
+          107,
+          880,
+          79,
+          77
+        ],
+        "shap": [
+          -2.7927520275115967,
+          -0.03284428268671036,
+          -0.6829094886779785,
+          0.460299551486969,
+          -4.9615983963012695,
+          -1.255214810371399,
+          -0.9232615232467651,
+          0.4421849548816681
+        ]
+      }
+    },
+    {
+      "name": "base_400",
+      "inputs": {
+        "Water/binder ratio": 0.152,
+        "Heating rate, °C/min": 10.0,
+        "Moisture content": 0.028,
+        "Characteristic length, mm": 20.0,
+        "Maximum exposure temperature, °C": 1000.0,
+        "Silica fume/binder ratio": 0.2,
+        "Maximum aggregate size, mm": 0.5,
+        "Quantity of PP fiber, kg/m³": 9.0
+      },
+      "expected": {
+        "probability": 0.0010289453202858567,
+        "predicted_class": 0,
+        "cl": 1.0,
+        "al": 1.0,
+        "reliable": true,
+        "neighbors": [
+          394,
+          423,
+          398,
+          422,
+          771,
+          765,
+          397,
+          421,
+          393,
+          680
+        ],
+        "shap": [
+          0.5903471112251282,
+          -0.4157527983188629,
+          0.5972051024436951,
+          -0.9004777073860168,
+          0.6369799971580505,
+          -0.0359361432492733,
+          0.8737332820892334,
+          -8.175395011901855
+        ]
+      }
+    },
+    {
+      "name": "base_903",
+      "inputs": {
+        "Water/binder ratio": 0.25,
+        "Heating rate, °C/min": 8.0,
+        "Moisture content": 0.0,
+        "Characteristic length, mm": 50.0,
+        "Maximum exposure temperature, °C": 600.0,
+        "Silica fume/binder ratio": 0.0,
+        "Maximum aggregate size, mm": 10.0,
+        "Quantity of PP fiber, kg/m³": 0.0
+      },
+      "expected": {
+        "probability": 0.0015012657968327403,
+        "predicted_class": 0,
+        "cl": 0.9999999999989636,
+        "al": 0.9999999999989636,
+        "reliable": true,
+        "neighbors": [
+          903,
+          897,
+          508,
+          523,
+          517,
+          895,
+          520,
+          526,
+          511,
+          901
+        ],
+        "shap": [
+          -0.010770168155431747,
+          -0.18096032738685608,
+          -4.585999965667725,
+          -0.6027792096138,
+          0.9356261491775513,
+          -1.5694434642791748,
+          -1.4546822309494019,
+          1.017960548400879
+        ]
+      }
+    },
+    {
+      "name": "synthetic_0",
+      "inputs": {
+        "Water/binder ratio": 0.6142016513185964,
+        "Heating rate, °C/min": 105.47110593055454,
+        "Moisture content": 0.06697063775308783,
+        "Characteristic length, mm": 145.5262452306855,
+        "Maximum exposure temperature, °C": 203.59508267641448,
+        "Silica fume/binder ratio": 0.2263443855797274,
+        "Maximum aggregate size, mm": 24.385133699452453,
+        "Quantity of PP fiber, kg/m³": 11.445096284832449
+      },
+      "expected": {
+        "probability": 0.015405931510031223,
+        "predicted_class": 0,
+        "cl": 1.0,
+        "al": 1.0,
+        "reliable": true,
+        "neighbors": [
+          74,
+          30,
+          445,
+          455,
+          451,
+          447,
+          456,
+          446,
+          452,
+          448
+        ],
+        "shap": [
+          -1.5187854766845703,
+          1.1408541202545166,
+          1.8539154529571533,
+          0.9093599915504456,
+          -4.035455226898193,
+          0.543488085269928,
+          -0.23965081572532654,
+          -2.762305974960327
+        ]
+      }
+    },
+    {
+      "name": "synthetic_7",
+      "inputs": {
+        "Water/binder ratio": 0.4110006752222293,
+        "Heating rate, °C/min": 136.60570172970628,
+        "Moisture content": 0.01090416585395728,
+        "Characteristic length, mm": 40.61541323647522,
+        "Maximum exposure temperature, °C": 835.2432579695188,
+        "Silica fume/binder ratio": 0.10929431982520675,
+        "Maximum aggregate size, mm": 18.1397270746203,
+        "Quantity of PP fiber, kg/m³": 11.138383363977333
+      },
+      "expected": {
+        "probability": 0.0005709599936380982,
+        "predicted_class": 0,
+        "cl": 0.8001274783843173,
+        "al": 0.8001274783843173,
+        "reliable": true,
+        "neighbors": [
+          535,
+          534,
+          536,
+          532,
+          773,
+          730,
+          731,
+          729,
+          772,
+          30
+        ],
+        "shap": [
+          -0.9853335618972778,
+          1.1605554819107056,
+          -3.523629665374756,
+          -0.017185159027576447,
+          0.2724429965019226,
+          -0.4323635697364807,
+          -0.9122732877731323,
+          -2.9809350967407227
+        ]
+      }
+    },
+    {
+      "name": "synthetic_23",
+      "inputs": {
+        "Water/binder ratio": 0.6129480187115873,
+        "Heating rate, °C/min": 158.88328784447071,
+        "Moisture content": 0.029145302852149387,
+        "Characteristic length, mm": 37.00400025107275,
+        "Maximum exposure temperature, °C": 921.4685724839286,
+        "Silica fume/binder ratio": 0.06089083969410461,
+        "Maximum aggregate size, mm": 29.985603239016882,
+        "Quantity of PP fiber, kg/m³": 3.50853157208277
+      },
+      "expected": {
+        "probability": 0.017932554706931114,
+        "predicted_class": 0,
+        "cl": 0.10042818185230629,
+        "al": 0.8995718181476938,
+        "reliable": false,
+        "neighbors": [
+          648,
+          647,
+          646,
+          645,
+          649,
+          644,
+          639,
+          640,
+          641,
+          637
+        ],
+        "shap": [
+          -2.21781849861145,
+          1.8014293909072876,
+          0.31175991892814636,
+          0.1850687563419342,
+          1.1451047658920288,
+          -0.5041050314903259,
+          -1.4826982021331787,
+          -3.1928865909576416
+        ]
+      }
+    },
+    {
+      "name": "synthetic_39",
+      "inputs": {
+        "Water/binder ratio": 0.2650076116411235,
+        "Heating rate, °C/min": 88.36095647510194,
+        "Moisture content": 0.028578611086447298,
+        "Characteristic length, mm": 78.94920159425818,
+        "Maximum exposure temperature, °C": 517.4104876996219,
+        "Silica fume/binder ratio": 0.15909245614577933,
+        "Maximum aggregate size, mm": 9.584422009332574,
+        "Quantity of PP fiber, kg/m³": 13.815371412975358
+      },
+      "expected": {
+        "probability": 0.23710079491138458,
+        "predicted_class": 0,
+        "cl": 1.0,
+        "al": 1.0,
+        "reliable": true,
+        "neighbors": [
+          771,
+          765,
+          773,
+          772,
+          759,
+          393,
+          767,
+          766,
+          397,
+          396
+        ],
+        "shap": [
+          -0.2166948914527893,
+          1.4978402853012085,
+          0.3829711675643921,
+          1.0131183862686157,
+          0.2927418351173401,
+          0.24546855688095093,
+          -0.16289077699184418,
+          -4.17229700088501
+        ]
+      }
+    }
+  ]
+}
