@@ -84,7 +84,6 @@ O cálculo nativo de Tree SHAP do XGBoost é usado para reduzir as dependências
 Pesquisa de Marcelo Mesquita do Amaral e Mauro de Vasconcellos Real.
 
 - Amaral, M. M. do; Real, M. de V. **Podemos confiar na predição de spalling do concreto sob incêndio por aprendizado de máquina?** Ambiente Construído, v. 26, e155274, 2026. [DOI](https://doi.org/10.1590/s1678-86212026000101027).
-- **Validation Strategies for Machine Learning Prediction of Fire-Induced Concrete Spalling.** Manuscrito fornecido pelo autor; trata das estratégias de validação, com 904 amostras e 17/8 variáveis.
 - [Documentação do Streamlit Community Cloud](https://docs.streamlit.io/deploy/streamlit-community-cloud).
 - [Documentação de persistência do XGBoost](https://xgboost.readthedocs.io/en/stable/tutorials/saving_model.html).
 
