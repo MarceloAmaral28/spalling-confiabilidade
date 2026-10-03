@@ -47,6 +47,5 @@ CL e AL são indicadores empíricos. Um resultado aceito não é garantia de ace
 ## Referências
 
 - Amaral, M. M. do; Real, M. de V. *Podemos confiar na predição de spalling do concreto sob incêndio por aprendizado de máquina?* Ambiente Construído, v. 26, e155274, 2026. [DOI](https://doi.org/10.1590/s1678-86212026000101027). Etapa inicial: 855 amostras, 17 atributos e configuração anterior.
-- *Validation Strategies for Machine Learning Prediction of Fire-Induced Concrete Spalling*. Manuscrito fornecido pelo autor. Avaliação de estratégias, com 904 amostras e conjuntos de 17/8 variáveis.
 - [API do XGBoost](https://xgboost.readthedocs.io/en/stable/python/python_api.html).
 - [TreeExplainer e escala da explicação](https://shap.readthedocs.io/en/latest/generated/shap.TreeExplainer.html).
