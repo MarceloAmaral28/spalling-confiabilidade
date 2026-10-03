@@ -118,7 +118,26 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
             'correct_oof': 'Acerto OOF (0/1)', 'distance': 'Distância padronizada', 'weight_fraction': 'Peso relativo',
         })
         st.dataframe(neighbors, hide_index=True, width='stretch')
+        st.markdown('**Origem dos registros e referências:** [Fire-Induced Concrete Spalling Dataset](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset).')
+        st.caption('Registro corresponde ao identificador idx_original da base processada. Referência identifica a fonte bibliográfica do experimento.')
+        st.markdown('[Consultar o mapeamento das referências bibliográficas](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset/blob/main/reference_mapping.csv)')
         st.caption('O filtro remove regiões pouco densas do treino. Ele não verifica, isoladamente, se a nova entrada está perto o suficiente da base. Atender a CL + AL não assegura acerto.')
+    with st.expander('Características dos vizinhos utilizados'):
+        st.write('Compare a amostra informada com os mesmos 10 vizinhos usados no cálculo de CL e AL, apresentados na mesma ordem da tabela anterior.')
+        rows = [{'Amostra': 'Entrada informada', 'Registro': '—', 'Referência': '—', **{
+            f['label'] + f" ({f['unit']})": result.inputs[f['column']] * f['ui_multiplier']
+            for f in model.features
+        }}]
+        for position, (_, neighbor) in enumerate(result.neighbors.iterrows(), start=1):
+            rows.append({'Amostra': f'Vizinho {position}', 'Registro': str(int(neighbor['idx_original'])),
+                         'Referência': str(int(neighbor['Reference'])), **{
+                             f['label'] + f" ({f['unit']})": float(neighbor[f['column']]) * f['ui_multiplier']
+                             for f in model.features
+                         }})
+        st.dataframe(pd.DataFrame(rows), hide_index=True, width='stretch', height=460,
+                     column_config={'Amostra': st.column_config.TextColumn(pinned=True)})
+        st.caption('Os atributos são exibidos nas unidades do formulário, antes da padronização usada nas distâncias. Umidade em porcentagem. Role a tabela horizontalmente para consultar todos os oito atributos.')
+        st.markdown('[Origem dos dados e identificação dos registros e referências](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset)')
 
 
 st.title('Spalling do concreto')
