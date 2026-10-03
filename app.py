@@ -217,5 +217,5 @@ st.divider()
 st.caption('Pesquisa de Marcelo Mesquita do Amaral e Mauro de Vasconcellos Real · avaliação de spalling e confiabilidade pontual.')
 with st.expander('Método e referências'):
     st.write('Esta versão utiliza o cenário XGBoost com oito variáveis do notebook 31. O modelo final foi treinado com todas as 904 amostras; o AL utiliza acertos de predições OOF com exclusão por referência. Os parâmetros de decisão ficam fixos para todos os usuários.')
-    st.markdown('[Artigo sobre confiabilidade pontual — Ambiente Construído](https://doi.org/10.1590/s1678-86212026000101027)')
+    st.markdown('[Artigo publicado — Ambiente Construído: Podemos confiar na predição de spalling do concreto sob incêndio por aprendizado de máquina?](https://doi.org/10.1590/s1678-86212026000101027)')
     st.caption('O artigo português descreve a etapa inicial, com 855 amostras e parâmetros diferentes. O aplicativo representa a evolução posterior do projeto; seus resultados não devem ser confundidos com os daquele experimento.')
