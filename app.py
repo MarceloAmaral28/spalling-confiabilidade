@@ -108,11 +108,11 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
         check = '<span style="color: #16803C; font-weight: 600">✓</span>'
         cross = '<span style="color: #C93636; font-weight: 600">✗</span>'
         st.markdown(
-            f'**CL — Concordância Local:** indica quanto os resultados experimentais dos vizinhos concordam com a predição para a nova amostra, considerando o peso de cada vizinho. Veja os símbolos na coluna **“Ocorreu spalling? (0/1)”**: {check} indica concordância; {cross} indica discordância.',
+            '**CL — Concordância Local:** indica quanto os resultados experimentais dos vizinhos concordam com a nova predição, considerando seus pesos. Veja a coluna **“Ocorreu spalling? (0/1)”**.',
             unsafe_allow_html=True,
         )
         st.markdown(
-            f'**AL — Ajuste Local:** indica quanto o modelo acertou nas predições desses vizinhos, considerando seus pesos. Veja a coluna **“O modelo acertou? (0/1)”**: 1 {check} indica acerto; 0 {cross} indica erro. Essas predições foram obtidas por **LORO-CV**, mantendo todos os registros da referência bibliográfica de cada vizinho fora do treinamento.',
+            '**AL — Ajuste Local:** indica quanto o modelo acertou nas predições dos vizinhos, considerando seus pesos. Veja a coluna **“O modelo acertou? (0/1)”**.',
             unsafe_allow_html=True,
         )
         neighbors = result.neighbors[['idx_original', 'Reference', 'output', 'correct_oof', 'distance', 'weight_fraction']].rename(columns={
@@ -146,8 +146,8 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
         st.markdown('**Legenda**')
         st.markdown(
             f'- **Ocorreu spalling?** 0 = não; 1 = sim, conforme o resultado experimental do vizinho. {check} indica concordância com a nova predição; {cross} indica discordância.\n'
-            f'- **O modelo acertou?** 1 {check} = sim; 0 {cross} = não. A predição foi feita com todos os registros da referência bibliográfica daquele vizinho fora do treinamento (LORO-CV).\n'
-            '- **Peso relativo:** participação de cada vizinho no cálculo. CL e AL são proporções ponderadas, não apenas a proporção de símbolos ✓.',
+            f'- **O modelo acertou?** 0 = não; 1 = sim. {check} indica acerto; {cross} indica erro. A avaliação utiliza LORO-CV, com a referência bibliográfica inteira do vizinho excluída do treinamento.\n'
+            '- **Peso relativo:** participação de cada vizinho no cálculo de CL e AL.',
             unsafe_allow_html=True,
         )
         st.markdown('**Origem dos registros e referências:** [Fire-Induced Concrete Spalling Dataset](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset).')
