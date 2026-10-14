@@ -105,12 +105,29 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
         st.caption(str(error))
     with st.expander('Como CL e AL foram calculados'):
         st.write('São usados os 10 vizinhos mais próximos na região de maior densidade da base de referência, após padronizar os oito atributos. Vizinhos próximos recebem maior peso.')
-        st.write('CL mede a concordância das classes reais dos vizinhos com a classe predita. AL mede o acerto do modelo nesses vizinhos em avaliações que excluíram suas referências inteiras do treino (OOF-LORO).')
+        st.markdown('**CL — Concordância Local:** indica quanto os resultados experimentais dos vizinhos concordam com a predição para a nova amostra, considerando o peso de cada vizinho.')
+        st.markdown('**AL — Ajuste Local:** indica quanto o modelo acertou nas predições desses vizinhos, considerando seus pesos. Essas predições foram obtidas por **LORO-CV**: em cada rodada, todos os registros de uma referência bibliográfica ficaram fora do treinamento e foram usados para avaliar o modelo.')
         neighbors = result.neighbors[['idx_original', 'Reference', 'output', 'correct_oof', 'distance', 'weight_fraction']].rename(columns={
             'idx_original': 'Registro', 'Reference': 'Referência', 'output': 'Spalling observado (0/1)',
-            'correct_oof': 'Acerto OOF (0/1)', 'distance': 'Distância padronizada', 'weight_fraction': 'Peso relativo',
+            'correct_oof': 'Acerto fora do treino — LORO-CV (0/1)', 'distance': 'Distância padronizada', 'weight_fraction': 'Peso relativo',
         })
-        st.dataframe(neighbors, hide_index=True, width='stretch')
+        observed_column = 'Spalling observado (0/1)'
+        accuracy_column = 'Acerto fora do treino — LORO-CV (0/1)'
+        def agreement(value):
+            return int(value) == result.predicted_class
+        def status_color(passed):
+            return 'color: #16803C; font-weight: 600' if passed else 'color: #C93636; font-weight: 600'
+        styled_neighbors = neighbors.style.map(
+            lambda value: status_color(agreement(value)), subset=[observed_column],
+        ).map(
+            lambda value: status_color(int(value) == 1), subset=[accuracy_column],
+        ).format({
+            observed_column: lambda value: f"{int(value)} {'✓' if agreement(value) else '✗'}",
+            accuracy_column: lambda value: f"{int(value)} {'✓' if int(value) == 1 else '✗'}",
+        })
+        st.dataframe(styled_neighbors, hide_index=True, width='stretch')
+        st.markdown('**Legenda**')
+        st.markdown('- **Spalling observado:** 0 = não ocorrência; 1 = ocorrência. Verde ✓ indica concordância com a predição da nova amostra; vermelho ✗ indica discordância.\n- **Acerto fora do treino:** 1 ✓ (verde) = acerto; 0 ✗ (vermelho) = erro na predição obtida com a referência inteira excluída do treinamento (LORO-CV).\n- **Peso relativo:** participação de cada vizinho no cálculo. CL e AL são proporções ponderadas, não apenas a proporção de símbolos ✓.')
         st.markdown('**Origem dos registros e referências:** [Fire-Induced Concrete Spalling Dataset](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset).')
         st.caption('Registro corresponde ao identificador idx_original da base processada. Referência identifica a fonte bibliográfica do experimento.')
         st.markdown('[Consultar o mapeamento das referências bibliográficas](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset/blob/main/reference_mapping.csv)')
