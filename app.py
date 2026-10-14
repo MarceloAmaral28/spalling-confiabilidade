@@ -49,7 +49,7 @@ def draw_explanation(model: SpallingModel, result: Evaluation) -> None:
     st.pyplot(fig, width='stretch')
     plt.close(fig)
     st.caption('Vermelho: aumenta a pontuação de spalling. Azul: reduz a pontuação. O tamanho da barra indica a contribuição nesta avaliação, não uma relação de causa e efeito.')
-    with st.expander('Ver valores da explicação'):
+    with st.expander('Valores informados e contribuições SHAP'):
         st.caption('As contribuições somadas ao valor de base reconstituem a margem do modelo. A conversão logística dessa margem produz sua probabilidade estimada.')
         rows = []
         for index in order:
@@ -103,13 +103,6 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
     except (ValueError, RuntimeError) as error:
         st.error('Não foi possível calcular a explicação desta avaliação. Os demais resultados estão apresentados acima.')
         st.caption(str(error))
-    with st.expander('Dados usados nesta avaliação'):
-        rows = [{
-            'Variável': f['label'],
-            'Valor': result.inputs[f['column']] * f['ui_multiplier'],
-            'Unidade': f['unit'],
-        } for f in model.features]
-        st.dataframe(pd.DataFrame(rows), hide_index=True, width='stretch')
     with st.expander('Como CL e AL foram calculados'):
         st.write('São usados os 10 vizinhos mais próximos na região de maior densidade da base de referência, após padronizar os oito atributos. Vizinhos próximos recebem maior peso.')
         st.write('CL mede a concordância das classes reais dos vizinhos com a classe predita. AL mede o acerto do modelo nesses vizinhos em avaliações que excluíram suas referências inteiras do treino (OOF-LORO).')
