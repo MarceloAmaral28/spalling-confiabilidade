@@ -105,33 +105,48 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
         st.caption(str(error))
     with st.expander('Como CL e AL foram calculados'):
         st.write('São usados os 10 vizinhos mais próximos na região de maior densidade da base de referência, após padronizar os oito atributos. Vizinhos próximos recebem maior peso.')
-        st.markdown('**CL — Concordância Local:** indica quanto os resultados experimentais dos vizinhos concordam com a predição para a nova amostra, considerando o peso de cada vizinho.')
-        st.markdown('**AL — Ajuste Local:** indica quanto o modelo acertou nas predições desses vizinhos, considerando seus pesos. Essas predições foram obtidas por **LORO-CV**: em cada rodada, todos os registros de uma referência bibliográfica ficaram fora do treinamento e foram usados para avaliar o modelo.')
+        check = '<span style="color: #16803C; font-weight: 600">✓</span>'
+        cross = '<span style="color: #C93636; font-weight: 600">✗</span>'
+        st.markdown(
+            f'**CL — Concordância Local:** indica quanto os resultados experimentais dos vizinhos concordam com a predição para a nova amostra, considerando o peso de cada vizinho. Veja os símbolos na coluna **“Ocorreu spalling? (0/1)”**: {check} indica concordância; {cross} indica discordância.',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'**AL — Ajuste Local:** indica quanto o modelo acertou nas predições desses vizinhos, considerando seus pesos. Veja a coluna **“O modelo acertou? (0/1)”**: 1 {check} indica acerto; 0 {cross} indica erro. Essas predições foram obtidas por **LORO-CV**, mantendo todos os registros da referência bibliográfica de cada vizinho fora do treinamento.',
+            unsafe_allow_html=True,
+        )
         neighbors = result.neighbors[['idx_original', 'Reference', 'output', 'correct_oof', 'distance', 'weight_fraction']].rename(columns={
             'idx_original': 'Registro', 'Reference': 'Referência', 'output': 'Ocorreu spalling? (0/1)',
             'correct_oof': 'O modelo acertou? (0/1)', 'distance': 'Distância padronizada', 'weight_fraction': 'Peso relativo',
         })
         observed_column = 'Ocorreu spalling? (0/1)'
         accuracy_column = 'O modelo acertou? (0/1)'
-        def agreement(value):
-            return int(value) == result.predicted_class
-        def status_color(passed):
-            return 'color: #16803C; font-weight: 600' if passed else 'color: #C93636; font-weight: 600'
-        styled_neighbors = neighbors.style.map(
-            lambda value: status_color(agreement(value)), subset=[observed_column],
-        ).map(
-            lambda value: status_color(int(value) == 1), subset=[accuracy_column],
-        ).format({
-            observed_column: lambda value: f"{int(value)} {'✓' if agreement(value) else '✗'}",
-            accuracy_column: lambda value: f"{int(value)} {'✓' if int(value) == 1 else '✗'}",
-        })
-        st.dataframe(styled_neighbors, hide_index=True, width='stretch')
+        display_neighbors = neighbors.copy()
+        for column in ('Registro', 'Referência'):
+            display_neighbors[column] = display_neighbors[column].map(lambda value: str(int(value)))
+        display_neighbors[observed_column] = neighbors[observed_column].map(
+            lambda value: f'{int(value)} {check if int(value) == result.predicted_class else cross}',
+        )
+        display_neighbors[accuracy_column] = neighbors[accuracy_column].map(
+            lambda value: f'{int(value)} {check if int(value) == 1 else cross}',
+        )
+        for column in ('Distância padronizada', 'Peso relativo'):
+            display_neighbors[column] = neighbors[column].map(lambda value: f'{value:.6g}')
+        # HTML permite colorir só o símbolo, mantendo o número na cor do tema.
+        table_html = display_neighbors.to_html(index=False, escape=False, border=0, classes='neighbor-status')
+        st.markdown(
+            '<style>.neighbor-status-wrap {overflow-x:auto; border:1px solid rgba(128,128,128,.25); border-radius:8px;}'
+            '.neighbor-status {width:100%; border-collapse:collapse; color:inherit; font-size:0.9rem;}'
+            '.neighbor-status th,.neighbor-status td {padding:9px 12px; border:1px solid rgba(128,128,128,.20); text-align:right; white-space:nowrap;}'
+            '.neighbor-status th {font-weight:500;}'
+            '.neighbor-status td span {margin-left:4px;}</style>'
+            f'<div class="neighbor-status-wrap">{table_html}</div>',
+            unsafe_allow_html=True,
+        )
         st.markdown('**Legenda**')
-        check = '<span style="color: #16803C; font-weight: 600">✓</span>'
-        cross = '<span style="color: #C93636; font-weight: 600">✗</span>'
         st.markdown(
             f'- **Ocorreu spalling?** 0 = não; 1 = sim, conforme o resultado experimental do vizinho. {check} indica concordância com a nova predição; {cross} indica discordância.\n'
-            f'- **O modelo acertou?** <span style="color: #16803C; font-weight: 600">1 ✓</span> = sim; <span style="color: #C93636; font-weight: 600">0 ✗</span> = não. A predição foi feita com todos os registros da referência bibliográfica daquele vizinho fora do treinamento (LORO-CV).\n'
+            f'- **O modelo acertou?** 1 {check} = sim; 0 {cross} = não. A predição foi feita com todos os registros da referência bibliográfica daquele vizinho fora do treinamento (LORO-CV).\n'
             '- **Peso relativo:** participação de cada vizinho no cálculo. CL e AL são proporções ponderadas, não apenas a proporção de símbolos ✓.',
             unsafe_allow_html=True,
         )
