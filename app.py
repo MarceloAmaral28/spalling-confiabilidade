@@ -84,34 +84,18 @@ def history_xlsx(rows: list[dict]) -> bytes:
     return buffer.getvalue()
 
 
-def display_history(model: SpallingModel, result: Evaluation | None) -> None:
-    rows = st.session_state.setdefault('evaluation_history', [])
-    with st.expander('Histórico de avaliações', expanded=bool(rows)):
-        if result is not None:
-            saved = st.session_state.get('evaluation_saved', False)
-            with st.form('save_evaluation', clear_on_submit=True):
-                name = st.text_input('Nome do caso (opcional)', max_chars=120, disabled=saved)
-                save = st.form_submit_button('Adicionar ao histórico', disabled=saved)
-            if save and not saved:
-                rows.append(history_row(model, result, name.strip() or f'Caso {len(rows) + 1}'))
-                st.session_state['evaluation_saved'] = True
-                st.rerun()
-        count = len(rows)
-        st.write(f'{count} avaliação adicionada.' if count == 1 else f'{count} avaliações adicionadas.')
-        st.caption('O histórico é temporário. Baixe a planilha antes de sair ou recarregar a página.')
-        if rows:
-            st.dataframe(
-                pd.DataFrame(rows), hide_index=True, width='stretch',
-                column_config={'Probabilidade estimada': st.column_config.NumberColumn(format='percent')},
-            )
-            st.download_button(
-                'Baixar histórico em Excel', data=history_xlsx(rows), file_name='historico-spalling.xlsx',
-                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', on_click='ignore',
-            )
-            if st.button('Limpar histórico'):
-                rows.clear()
-                st.session_state['evaluation_saved'] = False
-                st.rerun()
+def display_history(rows: list[dict]) -> None:
+    count = len(rows)
+    st.write(f'{count} avaliação nesta sessão' if count == 1 else f'{count} avaliações nesta sessão')
+    st.download_button(
+        'Baixar histórico de avaliações (.xlsx)',
+        data=history_xlsx(rows) if rows else b'',
+        file_name='historico-spalling.xlsx',
+        mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        on_click='ignore',
+        disabled=not rows,
+    )
+    st.caption('O histórico é temporário. Recarregar a página apaga as avaliações desta sessão. Baixe a planilha antes de sair ou recarregar.')
 
 
 def draw_explanation(model: SpallingModel, result: Evaluation) -> None:
@@ -322,6 +306,7 @@ with st.form('sample_form', clear_on_submit=False):
                 st.caption(f'Faixa observada na base: {minimum} a {maximum} {feature["unit"]}.')
     submitted = st.form_submit_button('Avaliar', type='primary', width='stretch')
 
+history = st.session_state.setdefault('evaluation_history', [])
 if submitted:
     st.session_state.pop('evaluation', None)
     missing = [f['label'] for f in model.features if input_values[f['column']] is None]
@@ -331,15 +316,17 @@ if submitted:
         inputs = {f['column']: float(input_values[f['column']]) / f['ui_multiplier'] for f in model.features}
         try:
             with st.spinner('Calculando a predição e a confiabilidade…'):
-                st.session_state['evaluation'] = model.evaluate(inputs)
-                st.session_state['evaluation_saved'] = False
+                evaluation = model.evaluate(inputs)
+                history.append(history_row(model, evaluation, f'Caso {len(history) + 1}'))
+                st.session_state['evaluation'] = evaluation
         except ValueError as error:
             st.error(str(error))
+
+display_history(history)
 
 result = st.session_state.get('evaluation')
 if result is not None:
     display_result(model, result)
-display_history(model, result)
 
 st.divider()
 st.caption('Pesquisa de Marcelo Mesquita do Amaral e Mauro de Vasconcellos Real · avaliação de spalling e confiabilidade pontual.')

@@ -14,38 +14,42 @@ NS = {'x': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
 
 
 class HistoryTests(unittest.TestCase):
-    def test_named_cases_survive_clearing_fields_and_export_as_values(self):
+    def test_only_valid_submissions_are_numbered_and_exported(self):
         app = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=30).run()
 
         def button(label):
             return next(item for item in app.button if item.label == label)
 
+        self.assertTrue(app.get('download_button')[0].proto.disabled)
+        button('Avaliar').click().run()
+        self.assertEqual(app.session_state['evaluation_history'], [])
         button('Carregar exemplo').click().run()
         button('Avaliar').click().run()
-        app.text_input[0].set_value('=1+1')
-        button('Adicionar ao histórico').click().run()
-        self.assertTrue(button('Adicionar ao histórico').disabled)
+        self.assertEqual(len(app.session_state['evaluation_history']), 1)
+        app.run()
+        self.assertEqual(len(app.session_state['evaluation_history']), 1)
         button('Limpar campos').click().run()
         self.assertEqual(len(app.session_state['evaluation_history']), 1)
         button('Carregar exemplo').click().run()
-        app.number_input(key='moisture').set_value(4.0)
+        app.number_input(key='water_binder').set_value(0.0)
         button('Avaliar').click().run()
+        self.assertTrue(app.error)
+        self.assertEqual(len(app.session_state['evaluation_history']), 1)
+        button('Carregar exemplo').click().run()
+        app.number_input(key='moisture').set_value(4.0)
         with patch.object(st, 'download_button', wraps=st.download_button) as download:
-            button('Adicionar ao histórico').click().run()
+            button('Avaliar').click().run()
             self.assertEqual(len(app.exception), 0)
+            self.assertFalse(download.call_args.kwargs['disabled'])
             payload = download.call_args.kwargs['data']
 
         rows = app.session_state['evaluation_history']
         self.assertEqual([row['Teor de umidade (%)'] for row in rows], [5.0, 4.0])
-        self.assertEqual([row['Caso'] for row in rows], ['=1+1', 'Caso 2'])
+        self.assertEqual([row['Caso'] for row in rows], ['Caso 1', 'Caso 2'])
         with ZipFile(BytesIO(payload)) as workbook:
             self.assertIsNone(workbook.testzip())
             sheet = ElementTree.fromstring(workbook.read('xl/worksheets/sheet1.xml'))
-            strings = ElementTree.fromstring(workbook.read('xl/sharedStrings.xml'))
             self.assertEqual(len(sheet.findall('.//x:row', NS)), 3)
-            self.assertFalse(sheet.findall('.//x:f', NS))
-            self.assertIn('=1+1', [cell.text for cell in strings.findall('.//x:t', NS)])
             self.assertEqual(sheet.find(".//x:c[@r='D3']/x:v", NS).text, '4')
-        button('Limpar histórico').click().run()
-        self.assertEqual(app.session_state['evaluation_history'], [])
-        self.assertIn('evaluation', app.session_state)
+        fresh = AppTest.from_file(str(ROOT / 'app.py'), default_timeout=30).run()
+        self.assertEqual(fresh.session_state['evaluation_history'], [])
