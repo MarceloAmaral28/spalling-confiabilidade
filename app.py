@@ -44,8 +44,6 @@ def feature_label(feature: dict, label: str | None = None) -> str:
 def display_indicator(label: str, value: float, passed: bool, key: str) -> None:
     with st.container(key=key if passed else f'{key}_below', border=True):
         st.metric(label, f'{value:.3f}'.replace('.', ','))
-        if not passed:
-            st.caption('Abaixo do limite')
 
 
 def history_row(model: SpallingModel, result: Evaluation, name: str) -> dict:
@@ -176,7 +174,7 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
                 display_indicator('Concordância Local — CL', result.cl, result.reliable_cl, 'cl')
             with al_column:
                 display_indicator('Ajuste Local — AL', result.al, result.reliable_al, 'al')
-            st.caption('Critérios fixos: CL ≥ 0,80 e AL ≥ 0,75. Ambos precisam ser atendidos; os valores são indicadores empíricos, não probabilidades de acerto.')
+            st.caption('Critérios fixos: CL ≥ 0,80 e AL ≥ 0,75. Ambos precisam ser atendidos. O fundo rosa indica que o critério não foi atendido. Os valores são indicadores empíricos, não probabilidades de acerto.')
     if result.outside_ranges:
         st.warning('Valores fora das faixas observadas na base: ' + ', '.join(result.outside_ranges) + '. Há extrapolação em pelo menos um atributo. CL e AL não são um teste de pertencimento ao domínio experimental.')
     if result.matching_records:
