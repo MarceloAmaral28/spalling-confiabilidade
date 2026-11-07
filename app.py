@@ -1,6 +1,7 @@
 """Interface pública em português. Execute: streamlit run app.py."""
 
 from pathlib import Path
+from io import BytesIO
 import os
 import tempfile
 
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import streamlit as st
+import xlsxwriter
 
 from spalling import Evaluation, SpallingModel
 
@@ -26,6 +28,92 @@ def load_model() -> SpallingModel:
 
 def display_value(value: float) -> str:
     return f'{value:.6g}'.replace('.', ',')
+
+
+FORM_GROUPS = (
+    ('Material', ('water_binder', 'silica_binder', 'aggregate_size', 'pp_fiber')),
+    ('Exposição, geometria e teor de umidade', ('heating_rate', 'temperature', 'characteristic_length', 'moisture')),
+)
+
+
+def feature_label(feature: dict, label: str | None = None) -> str:
+    title = label or feature['label']
+    return title if feature['unit'] == 'adimensional' else f"{title} ({feature['unit']})"
+
+
+def display_indicator(label: str, value: float, passed: bool, key: str) -> None:
+    with st.container(key=key if passed else f'{key}_below', border=True):
+        st.metric(label, f'{value:.3f}'.replace('.', ','))
+        if not passed:
+            st.caption('Abaixo do limite')
+
+
+def history_row(model: SpallingModel, result: Evaluation, name: str) -> dict:
+    return {
+        'Caso': name,
+        **{feature_label(f): result.inputs[f['column']] * f['ui_multiplier'] for f in model.features},
+        'Predição de spalling': 'Ocorrência' if result.predicted_class else 'Não ocorrência',
+        'Probabilidade estimada': result.probability,
+        'CL': result.cl,
+        'AL': result.al,
+        'Critério CL atendido': 'Sim' if result.reliable_cl else 'Não',
+        'Critério AL atendido': 'Sim' if result.reliable_al else 'Não',
+        'Atende aos critérios de confiabilidade': 'Sim' if result.reliable else 'Não',
+        'Atributos fora das faixas observadas': '; '.join(result.outside_ranges),
+    }
+
+
+def history_xlsx(rows: list[dict]) -> bytes:
+    buffer = BytesIO()
+    # Nomes dos casos devem ser texto, inclusive se começarem com '='.
+    options = {'in_memory': True, 'strings_to_formulas': False, 'strings_to_urls': False}
+    with xlsxwriter.Workbook(buffer, options) as workbook:
+        sheet = workbook.add_worksheet('Avaliações')
+        header = workbook.add_format({
+            'bold': True, 'bg_color': '#E6EEF4', 'text_wrap': True, 'valign': 'vcenter',
+        })
+        percent = workbook.add_format({'num_format': '0.00%'})
+        columns = list(rows[0])
+        sheet.set_row(0, 42)
+        for col, title in enumerate(columns):
+            sheet.write_string(0, col, title, header)
+            width = 27 if title == 'Caso' else min(30, max(13, len(title) // 2 + 5))
+            sheet.set_column(col, col, width, percent if title == 'Probabilidade estimada' else None)
+        for index, row in enumerate(rows, start=1):
+            sheet.write_row(index, 0, [row[title] for title in columns])
+        sheet.freeze_panes(1, 1)
+        sheet.autofilter(0, 0, len(rows), len(columns) - 1)
+    return buffer.getvalue()
+
+
+def display_history(model: SpallingModel, result: Evaluation | None) -> None:
+    rows = st.session_state.setdefault('evaluation_history', [])
+    with st.expander('Histórico de avaliações', expanded=bool(rows)):
+        if result is not None:
+            saved = st.session_state.get('evaluation_saved', False)
+            with st.form('save_evaluation', clear_on_submit=True):
+                name = st.text_input('Nome do caso (opcional)', max_chars=120, disabled=saved)
+                save = st.form_submit_button('Adicionar ao histórico', disabled=saved)
+            if save and not saved:
+                rows.append(history_row(model, result, name.strip() or f'Caso {len(rows) + 1}'))
+                st.session_state['evaluation_saved'] = True
+                st.rerun()
+        count = len(rows)
+        st.write(f'{count} avaliação adicionada.' if count == 1 else f'{count} avaliações adicionadas.')
+        st.caption('O histórico é temporário. Baixe a planilha antes de sair ou recarregar a página.')
+        if rows:
+            st.dataframe(
+                pd.DataFrame(rows), hide_index=True, width='stretch',
+                column_config={'Probabilidade estimada': st.column_config.NumberColumn(format='percent')},
+            )
+            st.download_button(
+                'Baixar histórico em Excel', data=history_xlsx(rows), file_name='historico-spalling.xlsx',
+                mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', on_click='ignore',
+            )
+            if st.button('Limpar histórico'):
+                rows.clear()
+                st.session_state['evaluation_saved'] = False
+                st.rerun()
 
 
 def draw_explanation(model: SpallingModel, result: Evaluation) -> None:
@@ -68,6 +156,7 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
     st.divider()
     st.subheader('Resultado da última avaliação enviada')
     st.caption('Ao mudar os campos, clique novamente em Avaliar para atualizar o resultado.')
+    st.html('<style>.st-key-cl_below,.st-key-al_below {background-color:rgba(221,69,111,.15);border-radius:8px;}</style>')
     prediction, reliability = st.columns(2)
     with prediction:
         with st.container(border=True):
@@ -79,20 +168,15 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
         with st.container(border=True):
             st.markdown('**Confiabilidade pontual**')
             if result.reliable:
-                st.success('Atende aos critérios CL + AL')
+                st.success('Atende aos critérios de confiabilidade')
             else:
-                st.warning('Não atende aos critérios CL + AL')
+                st.warning('Não atende aos critérios de confiabilidade')
             cl_column, al_column = st.columns(2)
-            cl_column.metric('Concordância Local — CL', f'{result.cl:.3f}'.replace('.', ','))
-            al_column.metric('Ajuste Local — AL', f'{result.al:.3f}'.replace('.', ','))
+            with cl_column:
+                display_indicator('Concordância Local — CL', result.cl, result.reliable_cl, 'cl')
+            with al_column:
+                display_indicator('Ajuste Local — AL', result.al, result.reliable_al, 'al')
             st.caption('Critérios fixos: CL ≥ 0,80 e AL ≥ 0,75. Ambos precisam ser atendidos; os valores são indicadores empíricos, não probabilidades de acerto.')
-    if not result.reliable:
-        missing = []
-        if not result.reliable_cl:
-            missing.append('concordância com as classes dos vizinhos (CL)')
-        if not result.reliable_al:
-            missing.append('desempenho do modelo em vizinhos deixados fora do treino (AL)')
-        st.info('Critério não atendido: ' + ' e '.join(missing) + '. Isso não significa que a predição esteja necessariamente errada.')
     if result.outside_ranges:
         st.warning('Valores fora das faixas observadas na base: ' + ', '.join(result.outside_ranges) + '. Há extrapolação em pelo menos um atributo. CL e AL não são um teste de pertencimento ao domínio experimental.')
     if result.matching_records:
@@ -138,7 +222,7 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
             '<style>.neighbor-status-wrap {overflow-x:auto; border:1px solid rgba(128,128,128,.25); border-radius:8px;}'
             '.neighbor-status {width:100%; border-collapse:collapse; color:inherit; font-size:0.9rem;}'
             '.neighbor-status th,.neighbor-status td {padding:9px 12px; border:1px solid rgba(128,128,128,.20); text-align:right; white-space:nowrap;}'
-            '.neighbor-status th {font-weight:500;}'
+            '.neighbor-status th {font-weight:500; white-space:normal; min-width:5ch;}'
             '.neighbor-status td span {margin-left:4px;}</style>'
             f'<div class="neighbor-status-wrap">{table_html}</div>',
             unsafe_allow_html=True,
@@ -153,22 +237,33 @@ def display_result(model: SpallingModel, result: Evaluation) -> None:
         st.markdown('**Origem dos registros e referências:** [Fire-Induced Concrete Spalling Dataset](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset).')
         st.caption('Registro corresponde ao identificador idx_original da base processada. Referência identifica a fonte bibliográfica do experimento.')
         st.markdown('[Consultar o mapeamento das referências bibliográficas](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset/blob/main/reference_mapping.csv)')
-        st.caption('O filtro remove regiões pouco densas do treino. Ele não verifica, isoladamente, se a nova entrada está perto o suficiente da base. Atender a CL + AL não assegura acerto.')
+        st.caption('O filtro remove regiões pouco densas do treino. Ele não verifica, isoladamente, se a nova entrada está perto o suficiente da base. Atender aos critérios de confiabilidade não assegura acerto.')
     with st.expander('Características dos vizinhos utilizados'):
         st.write('Compare a amostra informada com os mesmos 10 vizinhos usados no cálculo de CL e AL, apresentados na mesma ordem da tabela anterior.')
+        short_labels = {
+            'temperature': 'Temp. máx. de exposição',
+            'aggregate_size': 'Tam. máx. do agregado',
+            'pp_fiber': 'Fibras de PP',
+            'silica_binder': 'Sílica ativa/aglomerante',
+        }
+        labels = {f['column']: feature_label(f, short_labels.get(f['key'])) for f in model.features}
         rows = [{'Amostra': 'Entrada informada', 'Registro': '—', 'Referência': '—', **{
-            f['label'] + f" ({f['unit']})": result.inputs[f['column']] * f['ui_multiplier']
+            labels[f['column']]: result.inputs[f['column']] * f['ui_multiplier']
             for f in model.features
         }}]
         for position, (_, neighbor) in enumerate(result.neighbors.iterrows(), start=1):
             rows.append({'Amostra': f'Vizinho {position}', 'Registro': str(int(neighbor['idx_original'])),
                          'Referência': str(int(neighbor['Reference'])), **{
-                             f['label'] + f" ({f['unit']})": float(neighbor[f['column']]) * f['ui_multiplier']
+                             labels[f['column']]: float(neighbor[f['column']]) * f['ui_multiplier']
                              for f in model.features
                          }})
         st.dataframe(pd.DataFrame(rows), hide_index=True, width='stretch', height=460,
-                     column_config={'Amostra': st.column_config.TextColumn(pinned=True)})
-        st.caption('Os atributos são exibidos nas unidades do formulário, antes da padronização usada nas distâncias. Umidade em porcentagem. Role a tabela horizontalmente para consultar todos os oito atributos.')
+                     column_config={
+                         'Amostra': st.column_config.TextColumn(pinned=True),
+                         **{labels[f['column']]: st.column_config.NumberColumn(help=feature_label(f))
+                            for f in model.features},
+                     })
+        st.caption('Os atributos são exibidos nas unidades do formulário, antes da padronização usada nas distâncias. As razões água/aglomerante e sílica ativa/aglomerante não têm unidade. Role a tabela horizontalmente para consultar todos os oito atributos.')
         st.markdown('[Origem dos dados e identificação dos registros e referências](https://github.com/MarceloAmaral28/Fire-Induced-Concrete-Spalling-Dataset)')
 
 
@@ -210,13 +305,13 @@ if st.session_state.get('example_loaded'):
 with st.form('sample_form', clear_on_submit=False):
     material, exposure = st.columns(2, gap='large')
     input_values = {}
-    for column, group, title in ((material, 'material', 'Material'), (exposure, 'exposure', 'Exposição e geometria')):
+    feature_by_key = {feature['key']: feature for feature in model.features}
+    for column, (title, keys) in zip((material, exposure), FORM_GROUPS):
         with column:
             st.markdown(f'**{title}**')
-            for feature in model.features:
-                if feature['group'] != group:
-                    continue
-                label = feature['label'] + (f" ({feature['unit']})" if feature['unit'] != 'adimensional' else '')
+            for key in keys:
+                feature = feature_by_key[key]
+                label = feature_label(feature)
                 max_value = feature.get('physical_max')
                 max_value = None if max_value is None else float(max_value * feature['ui_multiplier'])
                 input_values[feature['column']] = st.number_input(
@@ -239,11 +334,14 @@ if submitted:
         try:
             with st.spinner('Calculando a predição e a confiabilidade…'):
                 st.session_state['evaluation'] = model.evaluate(inputs)
+                st.session_state['evaluation_saved'] = False
         except ValueError as error:
             st.error(str(error))
 
-if 'evaluation' in st.session_state:
-    display_result(model, st.session_state['evaluation'])
+result = st.session_state.get('evaluation')
+if result is not None:
+    display_result(model, result)
+display_history(model, result)
 
 st.divider()
 st.caption('Pesquisa de Marcelo Mesquita do Amaral e Mauro de Vasconcellos Real · avaliação de spalling e confiabilidade pontual.')

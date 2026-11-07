@@ -6,3 +6,4 @@ numpy==2.2.6
 pandas==2.2.3
 scipy==1.15.3
 matplotlib==3.11.2
+xlsxwriter==3.3.1
